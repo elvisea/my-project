@@ -22,6 +22,10 @@ on:
 env:
   REGISTRY: ghcr.io                    # Registry do GitHub para armazenar imagens Docker
   IMAGE_NAME: ${{ github.repository }} # Nome do repositório atual (formato: usuario/repo)
+  POSTGRES_USER: ${{ secrets.POSTGRES_USER }} # Variável de ambiente para o usuário do banco de dados
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }} # Variável de ambiente para a senha do banco de dados
+  POSTGRES_DB: ${{ secrets.POSTGRES_DB }} # Variável de ambiente para o nome do banco de dados
+  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }} # Variável de ambiente para a porta do banco de dados
 
 # Lista de jobs que serão executados
 jobs:
@@ -221,6 +225,10 @@ jobs:
 
     env:
       DOCKER_COMPOSE_FILE: docker-compose.prod.yml
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}  # Adicionando variáveis de ambiente para o PostgreSQL
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
 
     steps:
       - name: Checkout Repository

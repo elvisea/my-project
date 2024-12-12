@@ -9,11 +9,15 @@ services:
     
     environment:
       - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production', indicando que a aplicação está rodando em um ambiente de produção.
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
     
     networks:
       - app-network  # Conecta o serviço à rede personalizada 'app-network', permitindo comunicação com outros serviços na mesma rede.
     
     restart: unless-stopped  # Define que o container será reiniciado automaticamente, a menos que seja explicitamente parado.
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # Serviço para o My Project (Projeto Secundário) em produção
   my-project:
@@ -24,11 +28,34 @@ services:
     
     environment:
       - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production' para rodar a aplicação em produção.
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
     
     networks:
       - app-network  # Conecta o serviço à rede personalizada 'app-network', permitindo comunicação entre os containers.
     
     restart: unless-stopped  # Define que o container será reiniciado automaticamente, a menos que seja explicitamente parado.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: bitnami/postgresql:latest
+    expose:
+      - ${POSTGRES_PORT}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - /home/deploy/data/postgresql:/bitnami/postgresql  # Monta o diretório de dados local para persistência no container
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 # Definição de redes para comunicação entre os serviços
 networks:

@@ -21,6 +21,8 @@ services:
     command: npm run start:my-app:dev  # Define o comando que será executado quando o container for iniciado. Neste caso, o comando inicia a aplicação 'my-app' em modo de desenvolvimento.
     networks:
       - app-network
+    depends_on:
+      - postgres
 
   # Serviço para o My Project (Projeto Secundário) em desenvolvimento
   my-project:
@@ -42,9 +44,29 @@ services:
     command: npm run start:my-project:dev  # Define o comando a ser executado ao iniciar o container. Este comando inicia a aplicação 'my-project' em modo de desenvolvimento.
     networks:
       - app-network
+    depends_on:
+      - postgres
+
+  postgres:
+    image: bitnami/postgresql:latest  # Usando a imagem Bitnami PostgreSQL
+    expose:
+      - ${POSTGRES_PORT}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-my_database}
+    volumes:
+      - /home/deploy/data/postgresql:/bitnami/postgresql  # Monta o diretório de dados local para persistência no container
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 # Definição de redes para comunicação entre os serviços
 networks:
   app-network:
-    driver: bridge
-
+    driver: bridge  # A rede 'app-network' é configurada com o driver 'bridge', permitindo a comunicação entre os containers na mesma máquina.
