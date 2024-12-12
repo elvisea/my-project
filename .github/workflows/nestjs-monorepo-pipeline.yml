@@ -34,12 +34,10 @@ jobs:
     outputs:
       my-app: ${{ steps.filter.outputs.my-app }}
       my-project: ${{ steps.filter.outputs.my-project }}
-      shared: ${{ steps.filter.outputs.shared }}
-      pipeline-changed: ${{ steps.filter.outputs.pipeline-changed }}
-      
+      shared: ${{ steps.filter.outputs.shared }}    
     steps:
       - uses: actions/checkout@v4
-
+      
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -53,9 +51,6 @@ jobs:
               - 'package-lock.json'
               - 'tsconfig.json'
               - 'nest-cli.json'
-            pipeline-changed:
-              - '.github/workflows/nestjs-monorepo-pipeline.yml'  # Verifica alterações no arquivo de pipeline
-
   # Job de verificação de qualidade do código
   quality:
     name: Quality Check
@@ -222,8 +217,7 @@ jobs:
       (
         (needs.changes.outputs.my-app == 'true' && success('build-my-app')) || 
         (needs.changes.outputs.my-project == 'true' && success('build-my-project')) ||
-        needs.changes.outputs.shared == 'true' || 
-        needs.changes.outputs.pipeline-changed == 'true'  
+        needs.changes.outputs.shared == 'true'
       )
     environment: production
 
@@ -245,14 +239,12 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
-
       # Transfere o arquivo docker-compose.prod.yml para o servidor
       - name: Transfer Docker Compose File
         run: |
           scp -i ~/.ssh/deploy_key -P ${{ secrets.REMOTE_PORT }} \
               ${{ env.DOCKER_COMPOSE_FILE }} \
               ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.REMOTE_TARGET }}
-
       # Executa o deploy no servidor remoto
       - name: Deploy to Server
         run: |
@@ -281,15 +273,9 @@ jobs:
               echo 'my-project deployed successfully'; \
             else \
               echo 'Skipping my-project deployment'; \
-            fi && \
-            if [[ '${{ needs.changes.outputs.pipeline-changed }}' == 'true' ]]; then \
-              echo 'Deploying all services due to pipeline change...' && \
-              docker compose -f docker-compose.prod.yml pull && \
-              docker compose -f docker-compose.prod.yml up -d && \
-              echo 'All services deployed due to pipeline change'; \
             fi"
-          
+
       # Limpa a chave SSH por segurança
       - name: Cleanup
-        if: always()  # Executa mesmo se houver falha
+        if: always()        # Executa mesmo se houver falha
         run: rm -f ~/.ssh/deploy_key

@@ -7,7 +7,7 @@ async function bootstrap() {
   const appName = 'MyApp';
 
   console.log('==================================================');
-  console.log(`🚀 ${appName} está iniciando...`);
+  console.log(`🚀 ${appName} está iniciando... Aguarde...`);
   console.log(`🖥️ Ambiente: ${process.env.NODE_ENV || 'desenvolvimento'}`);
   console.log(`🌍 Porta: http://localhost:${port}`);
   console.log(`📅 Data: ${new Date().toLocaleString()}`);
