@@ -17,6 +17,16 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "paths": {}
+    "paths": {
+      "@app/*": [
+        "apps/*"
+      ],
+      "@lib/*": [
+        "libs/*"
+      ]
+    }
+  },
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval"
   }
 }
