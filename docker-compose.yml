@@ -1,0 +1,45 @@
+# Versão do Docker Compose
+version: '3.8'
+
+# Definição dos serviços (containers) que serão executados
+services:
+  # Primeiro serviço - my-app
+  my-app:
+    # Configuração de build do container
+    build:
+      # Contexto do build (diretório raiz do projeto)
+      context: .
+      # Localização do Dockerfile específico para este serviço
+      dockerfile: apps/my-app/Dockerfile
+    # Mapeamento de portas - porta_host:porta_container
+    ports:
+      - "3000:3000"
+    # Variáveis de ambiente
+    environment:
+      - NODE_ENV=production
+    # Define a rede que o container utilizará
+    networks:
+      - app-network
+    # Política de restart do container
+    # unless-stopped: reinicia sempre, exceto se manualmente parado
+    restart: unless-stopped
+
+  # Segundo serviço - my-project
+  my-project:
+    build:
+      context: .
+      dockerfile: apps/my-project/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
+
+# Definição das redes utilizadas pelos containers
+networks:
+  # Rede app-network que permite a comunicação entre os containers
+  app-network:
+    # Tipo de driver da rede (bridge é o padrão para comunicação entre containers)
+    driver: bridge
