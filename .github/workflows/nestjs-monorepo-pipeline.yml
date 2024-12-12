@@ -151,8 +151,8 @@ jobs:
             cd ${{ secrets.REMOTE_TARGET }} && \
             echo \"GITHUB_SHA=${{ github.sha }}\" > .env && \
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
-            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} pull && \
-            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d"
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} pull && \
+            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d"
 
       - name: Cleanup
         if: always()
