@@ -257,6 +257,10 @@ jobs:
             echo \"REGISTRY=${{ env.REGISTRY }}\" > .env && \
             echo \"IMAGE_NAME=${{ env.IMAGE_NAME }}\" >> .env && \
             echo \"GITHUB_SHA=${{ github.sha }}\" >> .env && \
+            echo \"POSTGRES_USER=${{ secrets.POSTGRES_USER }}\" >> .env && \
+            echo \"POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}\" >> .env && \
+            echo \"POSTGRES_DB=${{ secrets.POSTGRES_DB }}\" >> .env && \
+            echo \"POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}\" >> .env && \
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
             if [[ '${{ needs.changes.outputs.my-app }}' == 'true' ]]; then \
               echo 'Deploying my-app...' && \
@@ -274,6 +278,7 @@ jobs:
             else \
               echo 'Skipping my-project deployment'; \
             fi"
+    
 
       # Limpa a chave SSH por segurança
       - name: Cleanup
