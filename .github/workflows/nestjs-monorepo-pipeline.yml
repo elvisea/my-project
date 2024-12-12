@@ -1,0 +1,159 @@
+name: NestJS Monorepo CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  quality:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check Types
+        run: npm run build
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Unit Tests
+        run: npm run test
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
+
+  build:
+    name: Build Applications
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      MY_APP_IMAGE: my-app:${{ github.sha }}
+      MY_PROJECT_IMAGE: my-project:${{ github.sha }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build My App
+        run: npm run build my-app
+
+      - name: Build My Project
+        run: npm run build my-project
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build My App Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/my-app/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/my-app:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/my-app:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build My Project Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/my-project/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/my-project:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/my-project:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    environment: production
+
+    env:
+      DOCKER_COMPOSE_FILE: docker-compose.prod.yml
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create SSH key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Transfer Docker Compose File
+        run: |
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.REMOTE_PORT }} \
+              ${{ env.DOCKER_COMPOSE_FILE }} \
+              ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.REMOTE_TARGET }}
+
+      - name: Deploy to Server
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.REMOTE_PORT }} ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "\
+            cd ${{ secrets.REMOTE_TARGET }} && \
+            echo \"GITHUB_SHA=${{ github.sha }}\" > .env && \
+            docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
+            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} pull && \
+            docker-compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

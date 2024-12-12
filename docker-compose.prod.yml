@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  my-app:
+    image: ${REGISTRY}/${IMAGE_NAME}/my-app:${GITHUB_SHA}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  my-project:
+    image: ${REGISTRY}/${IMAGE_NAME}/my-project:${GITHUB_SHA}
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge 
