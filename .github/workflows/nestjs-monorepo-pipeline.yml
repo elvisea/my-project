@@ -4,9 +4,19 @@ name: NestJS Monorepo CI/CD Pipeline
 # Define quando o pipeline será executado
 on:
   push:
-    branches: [ main, develop ]  # Executa quando há push nestas branches
+    branches: [ main, develop ]
+    paths:
+      - 'apps/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
   pull_request:
-    branches: [ main, develop ]  # Executa quando há PR para estas branches
+    branches: [ main, develop ]
+    paths:
+      - 'apps/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/**'
 
 # Variáveis de ambiente globais disponíveis para todos os jobs
 env:
@@ -15,10 +25,36 @@ env:
 
 # Lista de jobs que serão executados
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      my-app: ${{ steps.filter.outputs.my-app }}
+      my-project: ${{ steps.filter.outputs.my-project }}
+      shared: ${{ steps.filter.outputs.shared }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            my-app:
+              - 'apps/my-app/**'
+            my-project:
+              - 'apps/my-project/**'
+            shared:
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+              - 'nest-cli.json'
+
   # Job de verificação de qualidade do código
   quality:
     name: Quality Check
     runs-on: ubuntu-latest    # Executa em uma máquina Ubuntu mais recente
+    needs: changes
+    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
     
     steps:
       # Faz checkout do código na máquina do runner
@@ -48,7 +84,8 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    needs: quality           # Só executa se o job quality passar
+    needs: [changes, quality]
+    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
 
     steps:
       - name: Checkout Repository
@@ -72,15 +109,10 @@ jobs:
         run: npm run test:e2e
 
   # Job de build das aplicações
-  build:
-    name: Build Applications
+  build-my-app:
+    needs: [changes, test]
+    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.shared == 'true' }}
     runs-on: ubuntu-latest
-    needs: test             # Só executa se o job test passar
-    env:
-      # Define nomes das imagens Docker com tag baseada no SHA do commit
-      MY_APP_IMAGE: my-app:${{ github.sha }}
-      MY_PROJECT_IMAGE: my-project:${{ github.sha }}
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -97,9 +129,6 @@ jobs:
       # Compila as aplicações
       - name: Build My App
         run: npm run build my-app
-
-      - name: Build My Project
-        run: npm run build my-project
 
       # Configura QEMU para build multi-plataforma
       - name: Set up QEMU
@@ -128,6 +157,43 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  build-my-project:
+    needs: [changes, test]
+    if: ${{ needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Compila as aplicações
+      - name: Build My Project
+        run: npm run build my-project
+
+      # Configura QEMU para build multi-plataforma
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Configura Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Faz login no GitHub Container Registry
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       # Constrói e publica a imagem Docker do my-project
       - name: Build My Project Docker Image
         uses: docker/build-push-action@v5
@@ -143,7 +209,7 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: build            # Só executa se o job build passar
+    needs: [build-my-app, build-my-project]
     if: github.ref == 'refs/heads/main'  # Só executa se for na branch main
     environment: production # Define o ambiente como produção
 
@@ -178,8 +244,8 @@ jobs:
             echo \"IMAGE_NAME=${{ env.IMAGE_NAME }}\" >> .env && \
             echo \"GITHUB_SHA=${{ github.sha }}\" >> .env && \
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
-            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} pull && \
-            docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d"
+            ${needs.changes.outputs.my-app == 'true' || needs.changes.outputs.shared == 'true' && 'docker compose -f docker-compose.prod.yml pull my-app && docker compose -f docker-compose.prod.yml up -d my-app'} && \
+            ${needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' && 'docker compose -f docker-compose.prod.yml pull my-project && docker compose -f docker-compose.prod.yml up -d my-project'}"
 
       # Limpa a chave SSH por segurança
       - name: Cleanup
