@@ -244,8 +244,16 @@ jobs:
             echo \"IMAGE_NAME=${{ env.IMAGE_NAME }}\" >> .env && \
             echo \"GITHUB_SHA=${{ github.sha }}\" >> .env && \
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
-            ${needs.changes.outputs.my-app == 'true' || needs.changes.outputs.shared == 'true' && 'docker compose -f docker-compose.prod.yml pull my-app && docker compose -f docker-compose.prod.yml up -d my-app'} && \
-            ${needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' && 'docker compose -f docker-compose.prod.yml pull my-project && docker compose -f docker-compose.prod.yml up -d my-project'}"
+            if [[ '${{ needs.changes.outputs.my-app }}' == 'true' || '${{ needs.changes.outputs.shared }}' == 'true' ]]; then \
+              echo 'Deploying my-app...' && \
+              docker compose -f docker-compose.prod.yml pull my-app && \
+              docker compose -f docker-compose.prod.yml up -d my-app; \
+            fi && \
+            if [[ '${{ needs.changes.outputs.my-project }}' == 'true' || '${{ needs.changes.outputs.shared }}' == 'true' ]]; then \
+              echo 'Deploying my-project...' && \
+              docker compose -f docker-compose.prod.yml pull my-project && \
+              docker compose -f docker-compose.prod.yml up -d my-project; \
+            fi"
 
       # Limpa a chave SSH por segurança
       - name: Cleanup
