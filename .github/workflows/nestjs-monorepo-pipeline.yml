@@ -112,6 +112,7 @@ jobs:
 
   # Job de build das aplicações
   build-my-app:
+    name: Build MyApp
     needs: [changes, test]
     if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.shared == 'true' }}
     runs-on: ubuntu-latest
@@ -160,6 +161,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-my-project:
+    name: Build MyProject
     needs: [changes, test]
     if: ${{ needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
     runs-on: ubuntu-latest
