@@ -149,7 +149,9 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -p ${{ secrets.REMOTE_PORT }} ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "\
             cd ${{ secrets.REMOTE_TARGET }} && \
-            echo \"GITHUB_SHA=${{ github.sha }}\" > .env && \
+            echo \"REGISTRY=${{ env.REGISTRY }}\" > .env && \
+            echo \"IMAGE_NAME=${{ env.IMAGE_NAME }}\" >> .env && \
+            echo \"GITHUB_SHA=${{ github.sha }}\" >> .env && \
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
             docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} pull && \
             docker compose -f ${{ env.DOCKER_COMPOSE_FILE }} up -d"
