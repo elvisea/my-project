@@ -35,10 +35,11 @@ jobs:
       my-app: ${{ steps.filter.outputs.my-app }}
       my-project: ${{ steps.filter.outputs.my-project }}
       shared: ${{ steps.filter.outputs.shared }}
-    
+      pipeline-changed: ${{ steps.filter.outputs.pipeline-changed }}
+      
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -52,6 +53,8 @@ jobs:
               - 'package-lock.json'
               - 'tsconfig.json'
               - 'nest-cli.json'
+            pipeline-changed:
+              - '.github/workflows/nestjs-monorepo-pipeline.yml'  # Verifica alterações no arquivo de pipeline
 
   # Job de verificação de qualidade do código
   quality:
@@ -219,13 +222,14 @@ jobs:
       (
         (needs.changes.outputs.my-app == 'true' && success('build-my-app')) || 
         (needs.changes.outputs.my-project == 'true' && success('build-my-project')) ||
-        needs.changes.outputs.shared == 'true'
+        needs.changes.outputs.shared == 'true' || 
+        needs.changes.outputs.pipeline-changed == 'true'  
       )
     environment: production
 
     env:
       DOCKER_COMPOSE_FILE: docker-compose.prod.yml
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}  # Adicionando variáveis de ambiente para o PostgreSQL
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
@@ -277,10 +281,15 @@ jobs:
               echo 'my-project deployed successfully'; \
             else \
               echo 'Skipping my-project deployment'; \
+            fi && \
+            if [[ '${{ needs.changes.outputs.pipeline-changed }}' == 'true' ]]; then \
+              echo 'Deploying all services due to pipeline change...' && \
+              docker compose -f docker-compose.prod.yml pull && \
+              docker compose -f docker-compose.prod.yml up -d && \
+              echo 'All services deployed due to pipeline change'; \
             fi"
-    
-
+          
       # Limpa a chave SSH por segurança
       - name: Cleanup
-        if: always()        # Executa mesmo se houver falha
+        if: always()  # Executa mesmo se houver falha
         run: rm -f ~/.ssh/deploy_key
