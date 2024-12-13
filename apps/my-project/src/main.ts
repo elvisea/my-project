@@ -5,7 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const port = 3001;
-  const appName = 'MyApp';
+  const appName = 'My Project';
 
   console.log('==================================================');
   console.log(`🚀 ${appName} está iniciando...`);

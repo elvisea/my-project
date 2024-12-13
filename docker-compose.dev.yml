@@ -1,24 +1,22 @@
-# Definição dos serviços que compõem a aplicação para o ambiente de desenvolvimento
 services:
-
   # Serviço para o My App (Aplicação Principal) em desenvolvimento
   my-app:
     build:
-      context: .  # O diretório de contexto é o diretório atual, onde o Docker Compose está sendo executado.
-      dockerfile: apps/my-app/Dockerfile  # Caminho para o Dockerfile usado para construir a imagem do serviço 'my-app'.
-      target: builder  # Utiliza o estágio de build 'builder' no Dockerfile. Esse estágio contém as ferramentas de desenvolvimento, como dependências de build e ferramentas de compilação.
-
+      context: .  
+      dockerfile: apps/my-app/Dockerfile
+      target: builder  
     ports:
-      - "3000:3000"  # Mapeia a porta 3000 do container para a porta 3000 da máquina host, permitindo que a aplicação seja acessada via http://localhost:3000.
-
+      - "3000:3000"
     environment:
-      - NODE_ENV=development  # Define a variável de ambiente 'NODE_ENV' como 'development', indicando que a aplicação está sendo executada em um ambiente de desenvolvimento.
-
+      - NODE_ENV=development
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - ./apps/my-app:/app/apps/my-app  # Mapeia o diretório local 'apps/my-app' para dentro do container em '/app/apps/my-app'. Isso permite que alterações no código-fonte local sejam refletidas no container.
-      - /app/apps/my-app/node_modules  # Mapeia o diretório de 'node_modules' dentro do container para evitar a sobrescrição de dependências locais durante o desenvolvimento.
-
-    command: npm run start:my-app:dev  # Define o comando que será executado quando o container for iniciado. Neste caso, o comando inicia a aplicação 'my-app' em modo de desenvolvimento.
+      - ./apps/my-app:/app/apps/my-app
+      - /app/apps/my-app/node_modules
+    command: npm run start:my-app:dev
     networks:
       - app-network
     depends_on:
@@ -27,46 +25,49 @@ services:
   # Serviço para o My Project (Projeto Secundário) em desenvolvimento
   my-project:
     build:
-      context: .  # O diretório de contexto é o diretório atual, onde o Docker Compose está sendo executado.
-      dockerfile: apps/my-project/Dockerfile  # Caminho para o Dockerfile usado para construir a imagem do serviço 'my-project'.
-      target: builder  # Utiliza o estágio de build 'builder' no Dockerfile, que contém as ferramentas de desenvolvimento.
-
+      context: .  
+      dockerfile: apps/my-project/Dockerfile
+      target: builder
     ports:
-      - "3001:3001"  # Mapeia a porta 3001 do container para a porta 3001 da máquina host, permitindo que a aplicação seja acessada via http://localhost:3001.
-
+      - "3001:3001"
     environment:
-      - NODE_ENV=development  # Define a variável de ambiente 'NODE_ENV' como 'development', indicando que a aplicação está rodando em ambiente de desenvolvimento.
-
+      - NODE_ENV=development
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - ./apps/my-project:/app/apps/my-project  # Mapeia o diretório local 'apps/my-project' para dentro do container em '/app/apps/my-project', permitindo sincronização de código entre o host e o container.
-      - /app/apps/my-project/node_modules  # Mapeia o diretório 'node_modules' dentro do container para persistir as dependências do projeto sem sobrescrevê-las.
-
-    command: npm run start:my-project:dev  # Define o comando a ser executado ao iniciar o container. Este comando inicia a aplicação 'my-project' em modo de desenvolvimento.
+      - ./apps/my-project:/app/apps/my-project
+      - /app/apps/my-project/node_modules
+    command: npm run start:my-project:dev
     networks:
       - app-network
     depends_on:
       - postgres
 
+  # Serviço PostgreSQL
   postgres:
-    image: bitnami/postgresql:latest  # Usando a imagem Bitnami PostgreSQL
-    expose:
-      - ${POSTGRES_PORT}
+    image: postgres:latest
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-my_database}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - /home/deploy/data/postgresql:/bitnami/postgresql  # Monta o diretório de dados local para persistência no container
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
-# Definição de redes para comunicação entre os serviços
 networks:
   app-network:
-    driver: bridge  # A rede 'app-network' é configurada com o driver 'bridge', permitindo a comunicação entre os containers na mesma máquina.
+    driver: bridge
+
+volumes:
+  postgres-data: {}

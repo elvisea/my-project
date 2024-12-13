@@ -4,7 +4,7 @@ import { MyAppModule } from './my-app.module';
 async function bootstrap() {
   const app = await NestFactory.create(MyAppModule);
   const port = 3000;
-  const appName = 'MyApp';
+  const appName = 'My App';
 
   console.log('==================================================');
   console.log(`🚀 ${appName} está iniciando...`);
