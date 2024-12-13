@@ -37,6 +37,7 @@ jobs:
       my-app: ${{ steps.filter.outputs.my-app }}
       my-project: ${{ steps.filter.outputs.my-project }}
       shared: ${{ steps.filter.outputs.shared }}
+      pipeline: ${{ steps.filter.outputs.pipeline }}  # Novo output para verificar alterações no pipeline
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +54,9 @@ jobs:
               - 'package-lock.json'
               - 'tsconfig.json'
               - 'nest-cli.json'
+            pipeline:
+              - '.github/workflows/nestjs-monorepo-pipeline.yml'  # Verificando alterações no pipeline
+
 
   # Job de verificação de qualidade do código
   quality:
@@ -222,9 +226,11 @@ jobs:
       (
         (needs.changes.outputs.my-app == 'true' && success('build-my-app')) || 
         (needs.changes.outputs.my-project == 'true' && success('build-my-project')) ||
-        needs.changes.outputs.shared == 'true'
+        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.pipeline == 'true' 
       )
     environment: production
+
 
     env:
       DOCKER_COMPOSE_FILE: docker-compose.prod.yml
