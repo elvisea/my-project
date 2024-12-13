@@ -9,7 +9,10 @@ services:
     
     environment:
       - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production', indicando que a aplicação está rodando em um ambiente de produção.
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}  # Definindo o host do PostgreSQL para o nome do serviço 'postgres'
+      - POSTGRES_USER=${POSTGRES_USER}  # Nome de usuário do banco
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # Senha do banco
+      - POSTGRES_DB=${POSTGRES_DB}  # Nome do banco de dados
     
     networks:
       - app-network  # Conecta o serviço à rede personalizada 'app-network', permitindo comunicação com outros serviços na mesma rede.
@@ -28,7 +31,10 @@ services:
     
     environment:
       - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production' para rodar a aplicação em produção.
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}  # Definindo o host do PostgreSQL para o nome do serviço 'postgres'
+      - POSTGRES_USER=${POSTGRES_USER}  # Nome de usuário do banco
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # Senha do banco
+      - POSTGRES_DB=${POSTGRES_DB}  # Nome do banco de dados
     
     networks:
       - app-network  # Conecta o serviço à rede personalizada 'app-network', permitindo comunicação entre os containers.
@@ -51,7 +57,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
