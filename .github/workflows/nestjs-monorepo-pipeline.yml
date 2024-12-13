@@ -21,11 +21,13 @@ on:
 # Variáveis de ambiente globais disponíveis para todos os jobs
 env:
   REGISTRY: ghcr.io                    # Registry do GitHub para armazenar imagens Docker
-  IMAGE_NAME: ${{ github.repository }} # Nome do repositório atual (formato: usuario/repo)
-  POSTGRES_USER: ${{ secrets.POSTGRES_USER }} # Variável de ambiente para o usuário do banco de dados
-  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }} # Variável de ambiente para a senha do banco de dados
-  POSTGRES_DB: ${{ secrets.POSTGRES_DB }} # Variável de ambiente para o nome do banco de dados
-  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }} # Variável de ambiente para a porta do banco de dados
+  IMAGE_NAME: ${{ github.repository }}  # Nome do repositório atual (formato: usuario/repo)
+  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}  # Variável de ambiente para o usuário do banco de dados
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}  # Variável de ambiente para a senha do banco de dados
+  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}  # Variável de ambiente para o nome do banco de dados
+  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}  # Variável de ambiente para a porta do banco de dados
+  POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}  # Adiciona o host do banco de dados (alterado conforme a referência no docker-compose.prod.yml)
+  DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:${{ secrets.POSTGRES_PORT }}/${{ secrets.POSTGRES_DB }}  # URL de conexão do banco de dados
 
 # Lista de jobs que serão executados
 jobs:
@@ -34,10 +36,10 @@ jobs:
     outputs:
       my-app: ${{ steps.filter.outputs.my-app }}
       my-project: ${{ steps.filter.outputs.my-project }}
-      shared: ${{ steps.filter.outputs.shared }}    
+      shared: ${{ steps.filter.outputs.shared }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -51,6 +53,7 @@ jobs:
               - 'package-lock.json'
               - 'tsconfig.json'
               - 'nest-cli.json'
+
   # Job de verificação de qualidade do código
   quality:
     name: Quality Check
@@ -229,6 +232,8 @@ jobs:
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
       POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}  # Passando o host do banco de dados
+      DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:${{ secrets.POSTGRES_PORT }}/${{ secrets.POSTGRES_DB }}  # Passando a URL do banco de dados
 
     steps:
       - name: Checkout Repository
@@ -241,12 +246,14 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
       # Transfere o arquivo docker-compose.prod.yml para o servidor
       - name: Transfer Docker Compose File
         run: |
           scp -i ~/.ssh/deploy_key -P ${{ secrets.REMOTE_PORT }} \
-              ${{ env.DOCKER_COMPOSE_FILE }} \
-              ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.REMOTE_TARGET }}
+            ${{ env.DOCKER_COMPOSE_FILE }} \
+            ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.REMOTE_TARGET }}
+
       # Executa o deploy no servidor remoto
       - name: Deploy to Server
         run: |
@@ -259,6 +266,8 @@ jobs:
             echo \"POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}\" >> .env && \
             echo \"POSTGRES_DB=${{ secrets.POSTGRES_DB }}\" >> .env && \
             echo \"POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}\" >> .env && \
+            echo \"POSTGRES_HOST=${{ env.POSTGRES_HOST }}\" >> .env && \
+            echo \"DATABASE_URL=${{ env.DATABASE_URL }}\" >> .env && \
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} && \
             if [[ '${{ needs.changes.outputs.my-app }}' == 'true' ]]; then \
               echo 'Deploying my-app...' && \
