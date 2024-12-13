@@ -28,6 +28,8 @@ env:
   POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}  # Variável de ambiente para a porta do banco de dados
   POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}  # Adiciona o host do banco de dados (alterado conforme a referência no docker-compose.prod.yml)
   DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:${{ secrets.POSTGRES_PORT }}/${{ secrets.POSTGRES_DB }}  # URL de conexão do banco de dados
+  PORT_MY_APP: ${{ secrets.PORT_MY_APP }}
+  PORT_MY_PROJECT: ${{ secrets.PORT_MY_PROJECT }}
 
 # Lista de jobs que serão executados
 jobs:
@@ -240,6 +242,8 @@ jobs:
       POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
       POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}  # Passando o host do banco de dados
       DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:${{ secrets.POSTGRES_PORT }}/${{ secrets.POSTGRES_DB }}  # Passando a URL do banco de dados
+      PORT_MY_APP: ${{ secrets.PORT_MY_APP }}
+      PORT_MY_PROJECT: ${{ secrets.PORT_MY_PROJECT }}
 
     steps:
       - name: Checkout Repository
@@ -268,6 +272,8 @@ jobs:
             echo \"REGISTRY=${{ env.REGISTRY }}\" > .env && \
             echo \"IMAGE_NAME=${{ env.IMAGE_NAME }}\" >> .env && \
             echo \"GITHUB_SHA=${{ github.sha }}\" >> .env && \
+            echo \"PORT_MY_APP=${{ secrets.PORT_MY_APP }}\" >> .env && \
+            echo \"PORT_MY_PROJECT=${{ secrets.PORT_MY_PROJECT }}\" >> .env && \
             echo \"POSTGRES_USER=${{ secrets.POSTGRES_USER }}\" >> .env && \
             echo \"POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}\" >> .env && \
             echo \"POSTGRES_DB=${{ secrets.POSTGRES_DB }}\" >> .env && \

@@ -1,10 +1,15 @@
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
+
 import { MyAppModule } from './my-app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(MyAppModule);
-  const port = 3333;
-  const appName = 'My App';
+
+  const configService = app.get<ConfigService>(ConfigService);
+  const port = configService.get<number>('PORT_MY_APP');
+
+  const appName = 'Monorepo: My App';
 
   console.log('==================================================');
   console.log(`🚀 ${appName} está iniciando...`);
