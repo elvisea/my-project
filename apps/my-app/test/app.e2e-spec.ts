@@ -19,8 +19,6 @@ describe('MyAppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect(
-        '🌟🌙 Durma bem e acorde com o coração leve! 💖🌜 🛏️😌 Boa noite!',
-      );
+      .expect('🌙✨ Boa noite! Que seus sonhos sejam tão lindos quanto você!');
   });
 });

@@ -15,9 +15,9 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "🌟🌙 Durma bem e acorde com o coração leve! 💖🌜 🛏️😌 Boa noite!"', () => {
+    it('should return "🌙✨ Boa noite! Que seus sonhos sejam tão lindos quanto você!"', () => {
       expect(appController.getHello()).toBe(
-        '🌟🌙 Durma bem e acorde com o coração leve! 💖🌜 🛏️😌 Boa noite!',
+        '🌙✨ Boa noite! Que seus sonhos sejam tão lindos quanto você!',
       );
     });
   });
