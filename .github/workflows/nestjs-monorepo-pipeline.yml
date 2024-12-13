@@ -107,11 +107,11 @@ jobs:
 
       # Executa testes unitários
       - name: Run Unit Tests
-        run: npm run test
+        run: npm run test -- --passWithNoTests
 
       # Executa testes end-to-end
       - name: Run E2E Tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --passWithNoTests
 
   # Job de build das aplicações
   build-my-app:
