@@ -6,8 +6,9 @@ services:
       dockerfile: apps/my-app/Dockerfile
       target: builder  
     ports:
-       - "3333:3333"
+       - ${PORT_MY_APP}:${PORT_MY_APP}
     environment:
+      - PORT_MY_APP=${PORT_MY_APP}
       - NODE_ENV=development
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -29,8 +30,9 @@ services:
       dockerfile: apps/my-project/Dockerfile
       target: builder
     ports:
-      - "3334:3334"
+      - ${PORT_MY_PROJECT}:${PORT_MY_PROJECT}
     environment:
+      - PORT_MY_PROJECT=${PORT_MY_PROJECT}
       - NODE_ENV=development
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_USER=${POSTGRES_USER}

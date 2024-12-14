@@ -35,7 +35,7 @@ COPY --from=builder /app/dist/apps/my-project ./dist
 # Define variável de ambiente para produção
 ENV NODE_ENV production
 # Expõe a porta que a aplicação utilizará
-EXPOSE 3001
+EXPOSE ${PORT_MY_PROJECT}
 
 # Comando para iniciar a aplicação
 CMD ["node", "dist/main.js"] 
