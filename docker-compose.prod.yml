@@ -1,13 +1,12 @@
-# Definição dos serviços que compõem a aplicação para produção
 services:
-  
   # Serviço para o My App (Aplicação Principal) em produção
   my-app:
     image: ${REGISTRY}/${IMAGE_NAME}/my-app:${GITHUB_SHA}  # Define a imagem Docker para o serviço 'my-app', utilizando variáveis de ambiente para o repositório, nome da imagem e a tag baseada no SHA do commit.
     ports:
-      - "3000:3000"  # Mapeia a porta 3000 do container para a porta 3000 da máquina host. A aplicação pode ser acessada via http://localhost:3000.
+      - ${PORT_MY_APP}:${PORT_MY_APP}  # Mapeia a porta 3000 do container para a porta 3000 da máquina host. A aplicação pode ser acessada via http://localhost:3000.
     
     environment:
+      - PORT_MY_APP=${PORT_MY_APP}
       - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production', indicando que a aplicação está rodando em um ambiente de produção.
       - POSTGRES_HOST=${POSTGRES_HOST}  # Definindo o host do PostgreSQL para o nome do serviço 'postgres'
       - POSTGRES_USER=${POSTGRES_USER}  # Nome de usuário do banco
@@ -27,9 +26,10 @@ services:
     image: ${REGISTRY}/${IMAGE_NAME}/my-project:${GITHUB_SHA}  # Define a imagem Docker para o serviço 'my-project', utilizando variáveis de ambiente para o repositório, nome da imagem e a tag baseada no SHA do commit.
     
     ports:
-      - "3001:3001"  # Mapeia a porta 3001 do container para a porta 3001 da máquina host. A aplicação pode ser acessada via http://localhost:3001.
+      - ${PORT_MY_PROJECT}:${PORT_MY_PROJECT}  # Mapeia a porta 3001 do container para a porta 3001 da máquina host. A aplicação pode ser acessada via http://localhost:3001.
     
     environment:
+      - PORT_MY_PROJECT=${PORT_MY_PROJECT}
       - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production' para rodar a aplicação em produção.
       - POSTGRES_HOST=${POSTGRES_HOST}  # Definindo o host do PostgreSQL para o nome do serviço 'postgres'
       - POSTGRES_USER=${POSTGRES_USER}  # Nome de usuário do banco
@@ -46,12 +46,12 @@ services:
 
   postgres:
     image: bitnami/postgresql:latest
-    expose:
-      - ${POSTGRES_PORT}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - /home/deploy/data/postgresql:/bitnami/postgresql  # Monta o diretório de dados local para persistência no container
     networks:
