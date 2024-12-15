@@ -45,7 +45,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: bitnami/postgresql:latest
+    image: postgres:latest
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
