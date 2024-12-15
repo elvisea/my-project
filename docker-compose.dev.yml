@@ -1,24 +1,47 @@
 services:
-  # Serviço para o Barber Master (Aplicação Principal) em desenvolvimento
-  barber-master:
+  # Serviço para o My App (Aplicação Principal) em desenvolvimento
+  my-app:
     build:
-      context: .  # Define o contexto de build para a raiz do projeto
-      dockerfile: Dockerfile  # Agora o Dockerfile está na raiz do projeto
-      target: builder
+      context: .  
+      dockerfile: apps/my-app/Dockerfile
+      target: builder  
     ports:
-      - ${PORT_BARBER_MASTER}:${PORT_BARBER_MASTER}  # Mapeia a porta do container para a porta da máquina host
+       - ${PORT_MY_APP}:${PORT_MY_APP}
     environment:
-      - PORT_BARBER_MASTER=${PORT_BARBER_MASTER}  # Definindo a variável de ambiente para a porta
-      - NODE_ENV=development  # Modo de desenvolvimento
-      - POSTGRES_HOST=${POSTGRES_HOST}  # Configuração do banco de dados
+      - PORT_MY_APP=${PORT_MY_APP}
+      - NODE_ENV=development
+      - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - ./src:/app/src  # Mapeia o código-fonte local para o container (pasta src)
-      - /app/node_modules  # Mantém os node_modules no container
+      - ./apps/my-app:/app/apps/my-app
+      - /app/apps/my-app/node_modules
+    command: npm run start:my-app:dev
+    networks:
+      - app-network
+    depends_on:
+      - postgres
 
-    command: npm run start:dev  # Comando padrão do NestJS para iniciar o servidor em modo desenvolvimento
+  # Serviço para o My Project (Projeto Secundário) em desenvolvimento
+  my-project:
+    build:
+      context: .  
+      dockerfile: apps/my-project/Dockerfile
+      target: builder
+    ports:
+      - ${PORT_MY_PROJECT}:${PORT_MY_PROJECT}
+    environment:
+      - PORT_MY_PROJECT=${PORT_MY_PROJECT}
+      - NODE_ENV=development
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ./apps/my-project:/app/apps/my-project
+      - /app/apps/my-project/node_modules
+    command: npm run start:my-project:dev
     networks:
       - app-network
     depends_on:
@@ -28,17 +51,17 @@ services:
   postgres:
     image: postgres:latest
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}  # Mapeia a porta do PostgreSQL
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres-data:/var/lib/postgresql/data  # Volume para persistir os dados do banco
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]  # Verifica a saúde do banco
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,7 +69,7 @@ services:
 
 networks:
   app-network:
-    driver: bridge  # Define a rede para os containers se comunicarem
+    driver: bridge
 
 volumes:
-  postgres-data: {}  # Define um volume para armazenar os dados do PostgreSQL
+  postgres-data: {}

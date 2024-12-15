@@ -1,43 +1,69 @@
 services:
-  # Serviço para o Barber Master (Aplicação Principal) em produção
-  barber-master:
-    image: ${REGISTRY}/${IMAGE_NAME}/barber-master:${GITHUB_SHA}  # Usa a tag do commit para versionamento da imagem
+  # Serviço para o My App (Aplicação Principal) em produção
+  my-app:
+    image: ${REGISTRY}/${IMAGE_NAME}/my-app:${GITHUB_SHA}  # Define a imagem Docker para o serviço 'my-app', utilizando variáveis de ambiente para o repositório, nome da imagem e a tag baseada no SHA do commit.
     ports:
-      - ${PORT_BARBER_MASTER}:${PORT_BARBER_MASTER}  # Mapeia as portas do container para a máquina host
+      - ${PORT_MY_APP}:${PORT_MY_APP}  # Mapeia a porta 3000 do container para a porta 3000 da máquina host. A aplicação pode ser acessada via http://localhost:3000.
+    
     environment:
-      - PORT_BARBER_MASTER=${PORT_BARBER_MASTER}  # Variáveis de ambiente
-      - NODE_ENV=production  # Define o ambiente como produção
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - PORT_MY_APP=${PORT_MY_APP}
+      - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production', indicando que a aplicação está rodando em um ambiente de produção.
+      - POSTGRES_HOST=${POSTGRES_HOST}  # Definindo o host do PostgreSQL para o nome do serviço 'postgres'
+      - POSTGRES_USER=${POSTGRES_USER}  # Nome de usuário do banco
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # Senha do banco
+      - POSTGRES_DB=${POSTGRES_DB}  # Nome do banco de dados
+    
     networks:
-      - app-network
-    restart: unless-stopped
+      - app-network  # Conecta o serviço à rede personalizada 'app-network', permitindo comunicação com outros serviços na mesma rede.
+    
+    restart: unless-stopped  # Define que o container será reiniciado automaticamente, a menos que seja explicitamente parado.
     depends_on:
       postgres:
-        condition: service_healthy  # Garante que o PostgreSQL esteja saudável antes de iniciar
+        condition: service_healthy
 
-  # Serviço PostgreSQL
+  # Serviço para o My Project (Projeto Secundário) em produção
+  my-project:
+    image: ${REGISTRY}/${IMAGE_NAME}/my-project:${GITHUB_SHA}  # Define a imagem Docker para o serviço 'my-project', utilizando variáveis de ambiente para o repositório, nome da imagem e a tag baseada no SHA do commit.
+    
+    ports:
+      - ${PORT_MY_PROJECT}:${PORT_MY_PROJECT}  # Mapeia a porta 3001 do container para a porta 3001 da máquina host. A aplicação pode ser acessada via http://localhost:3001.
+    
+    environment:
+      - PORT_MY_PROJECT=${PORT_MY_PROJECT}
+      - NODE_ENV=production  # Define a variável de ambiente 'NODE_ENV' como 'production' para rodar a aplicação em produção.
+      - POSTGRES_HOST=${POSTGRES_HOST}  # Definindo o host do PostgreSQL para o nome do serviço 'postgres'
+      - POSTGRES_USER=${POSTGRES_USER}  # Nome de usuário do banco
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # Senha do banco
+      - POSTGRES_DB=${POSTGRES_DB}  # Nome do banco de dados
+    
+    networks:
+      - app-network  # Conecta o serviço à rede personalizada 'app-network', permitindo comunicação entre os containers.
+    
+    restart: unless-stopped  # Define que o container será reiniciado automaticamente, a menos que seja explicitamente parado.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:latest
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}  # Mapeia as portas do PostgreSQL
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - /home/deploy/data/postgresql:/var/lib/postgresql/data  # Volume de persistência dos dados
+      - /home/deploy/data/postgresql:/bitnami/postgresql  # Monta o diretório de dados local para persistência no container
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]  # Verifica a saúde do banco
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
+# Definição de redes para comunicação entre os serviços
 networks:
   app-network:
-    driver: bridge  # Define a rede para os containers se comunicarem
+    driver: bridge  # A rede 'app-network' é configurada com o driver 'bridge', permitindo a comunicação entre os containers na mesma máquina.

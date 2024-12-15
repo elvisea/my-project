@@ -1,20 +1,14 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
-import { AppService } from './app.service';
-import { AppController } from './app.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerOptions } from 'typeorm';
+
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { Owner } from '../entities/owner.entity';
+import { VerifiedOwnerEmail } from '../entities/verified-owner-email.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env.development.local', '.env.development', '.env'],
-      cache: false,
-      expandVariables: true,
-    }),
-
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
@@ -23,7 +17,7 @@ import { LoggerOptions } from 'typeorm';
             ? ['query', 'error', 'schema', 'warn']
             : [];
 
-        // console.log(`📅 Data: ${new Date().toLocaleString()}`);
+        console.log(`📅 Data: ${new Date().toLocaleString()}`);
         console.log(
           `Environment: ${configService.get('NODE_ENV') === 'development'}`,
         );
@@ -35,14 +29,13 @@ import { LoggerOptions } from 'typeorm';
           username: configService.get('POSTGRES_USER'),
           password: configService.get('POSTGRES_PASSWORD'),
           database: configService.get('POSTGRES_DB'),
-          entities: [],
+          entities: [Owner, VerifiedOwnerEmail],
           synchronize: true,
           logging: logging,
         };
       },
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  exports: [TypeOrmModule],
 })
-export class AppModule {}
+export class DatabaseModule {}

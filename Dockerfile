@@ -1,43 +1,38 @@
-# Estágio de build - Usa uma imagem Node.js Alpine para minimizar o tamanho
-FROM node:20-alpine AS builder
+# Etapa 1: Build da aplicação
+FROM node:20 AS build
 
-# Define o diretório de trabalho dentro do container
+# Diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de configuração primeiro para aproveitar o cache do Docker
-# Isso evita reinstalar as dependências se só o código fonte mudou
-COPY package*.json ./
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
+# Copiar package.json e package-lock.json
+COPY package.json package-lock.json ./
 
-# Copia o código fonte da aplicação
-# Agora, copiamos a pasta 'src', que é onde o código do NestJS está localizado
-COPY src ./src 
-
-# Instala todas as dependências
+# Instalar dependências
 RUN npm install
 
-# Compila o projeto TypeScript
-RUN npm run build  # O NestJS usará 'build' para compilar o código de 'src' para 'dist'
+# Copiar todo o código da aplicação
+COPY . .
 
-# Estágio de produção - Cria uma imagem menor apenas com o necessário para executar
-FROM node:20-alpine AS production
+# Compilar todas as aplicações do monorepo
+RUN npm run build
+
+# Etapa 2: Criar a imagem de produção
+FROM node:20 AS production
 
 WORKDIR /app
 
-# Copia apenas o package.json e instala somente as dependências de produção
-COPY package*.json ./
-RUN npm install --omit=dev
+# Copiar dependências instaladas da etapa anterior
+COPY --from=build /app/node_modules /app/node_modules
 
-# Copia os arquivos compilados do estágio de build
-# Copia a pasta dist do estágio de build
-COPY --from=builder /app/dist ./dist  
+# Copiar os arquivos compilados para todas as aplicações
+COPY --from=build /app/dist /app/dist
 
-# Define variável de ambiente para produção
-ENV NODE_ENV production
+# Variáveis de ambiente
+ENV NODE_ENV=production
 
-# Expõe a porta que a aplicação utilizará
-EXPOSE ${PORT_BARBER_MASTER}
+# Expor as portas de todas as aplicações
+EXPOSE 3000
+EXPOSE 3001
 
-# Comando para iniciar a aplicação
-CMD ["node", "dist/main.js"]  # Comando padrão para iniciar uma aplicação NestJS compilada
+# Iniciar ambas as aplicações (usando PM2, por exemplo)
+CMD ["npm", "run", "start:prod"]

@@ -1,0 +1,22 @@
+# Definição dos serviços que compõem a aplicação
+services:
+  
+  # Serviço para o My App (Aplicação Principal)
+  my-app:
+    networks:
+      - app-network
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+
+  # Serviço para o My Project (Projeto Secundário)
+  my-project:
+    networks:
+      - app-network
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
