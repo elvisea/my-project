@@ -12,7 +12,7 @@ COPY nest-cli.json ./
 
 # Copia o código fonte da aplicação e bibliotecas compartilhadas
 COPY apps/my-app ./apps/my-app
-# COPY libs ./libs
+COPY libs ./libs
 
 # Instala todas as dependências
 RUN npm install

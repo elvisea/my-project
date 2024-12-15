@@ -12,7 +12,7 @@ COPY nest-cli.json ./
 
 # Copia o código fonte da aplicação e bibliotecas compartilhadas
 COPY apps/my-project ./apps/my-project
-# COPY libs ./libs
+COPY libs ./libs
 
 # Instala todas as dependências
 RUN npm install
@@ -35,7 +35,7 @@ COPY --from=builder /app/dist/apps/my-project ./dist
 # Define variável de ambiente para produção
 ENV NODE_ENV production
 # Expõe a porta que a aplicação utilizará
-EXPOSE  ${PORT_MY_PROJECT}
+EXPOSE ${PORT_MY_PROJECT}
 
 # Comando para iniciar a aplicação
 CMD ["node", "dist/main.js"] 
