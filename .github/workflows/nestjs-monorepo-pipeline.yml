@@ -7,6 +7,7 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apps/**'
+      - 'libs/**'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/**'
@@ -14,6 +15,7 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apps/**'
+      - 'libs/**'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/**'
@@ -38,7 +40,7 @@ jobs:
     outputs:
       my-app: ${{ steps.filter.outputs.my-app }}
       my-project: ${{ steps.filter.outputs.my-project }}
-      shared: ${{ steps.filter.outputs.shared }}
+      libs: ${{ steps.filter.outputs.libs }}
       pipeline: ${{ steps.filter.outputs.pipeline }}  # Novo output para verificar alterações no pipeline
     steps:
       - uses: actions/checkout@v4
@@ -51,11 +53,8 @@ jobs:
               - 'apps/my-app/**'
             my-project:
               - 'apps/my-project/**'
-            shared:
-              - 'package.json'
-              - 'package-lock.json'
-              - 'tsconfig.json'
-              - 'nest-cli.json'
+            libs:
+              - 'libs/**'
             pipeline:
               - '.github/workflows/nestjs-monorepo-pipeline.yml'  # Verificando alterações no pipeline
 
@@ -65,7 +64,7 @@ jobs:
     name: Quality Check
     runs-on: ubuntu-latest    # Executa em uma máquina Ubuntu mais recente
     needs: changes
-    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
+    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.my-project == 'true' || needs.changes.outputs.libs == 'true' }}
     
     steps:
       # Faz checkout do código na máquina do runner
@@ -96,7 +95,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     needs: [changes, quality]
-    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
+    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.my-project == 'true' || needs.changes.outputs.libs == 'true' }}
 
     steps:
       - name: Checkout Repository
@@ -123,7 +122,7 @@ jobs:
   build-my-app:
     name: Build MyApp
     needs: [changes, test]
-    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.shared == 'true' }}
+    if: ${{ needs.changes.outputs.my-app == 'true' || needs.changes.outputs.libs == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -172,7 +171,7 @@ jobs:
   build-my-project:
     name: Build MyProject
     needs: [changes, test]
-    if: ${{ needs.changes.outputs.my-project == 'true' || needs.changes.outputs.shared == 'true' }}
+    if: ${{ needs.changes.outputs.my-project == 'true' || needs.changes.outputs.libs == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -228,7 +227,7 @@ jobs:
       (
         (needs.changes.outputs.my-app == 'true' && success('build-my-app')) || 
         (needs.changes.outputs.my-project == 'true' && success('build-my-project')) ||
-        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.libs == 'true' ||
         needs.changes.outputs.pipeline == 'true' 
       )
     environment: production
