@@ -1,6 +1,5 @@
 import { Owner } from '@lib/database/entities/owner.entity';
 
-export interface IOwnerRepository {
-  create(owner: Owner): Promise<Owner>;
-  findByEmail(email: string): Promise<Owner | undefined>;
-}
+import { IGenericRepository } from '../../../repositories/generic-repository.interface';
+
+export interface IOwnerRepository extends IGenericRepository<Owner> {}

@@ -13,7 +13,7 @@ export class OwnerRepository implements IOwnerRepository {
     private readonly repository: Repository<Owner>,
   ) {}
 
-  async findByEmail(email: string): Promise<Owner | undefined> {
+  async findByEmail(email: string): Promise<Owner | null> {
     return this.repository.findOne({ where: { email } });
   }
 
