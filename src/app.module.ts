@@ -23,7 +23,7 @@ import { LoggerOptions } from 'typeorm';
             ? ['query', 'error', 'schema', 'warn']
             : [];
 
-        console.log(`📅 Data: ${new Date().toLocaleString()}`);
+        // console.log(`📅 Data: ${new Date().toLocaleString()}`);
         console.log(
           `Environment: ${configService.get('NODE_ENV') === 'development'}`,
         );
@@ -45,4 +45,4 @@ import { LoggerOptions } from 'typeorm';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
