@@ -5,7 +5,7 @@ services:
     ports:
       - ${PORT_BARBER_MASTER}:${PORT_BARBER_MASTER}  # Mapeia as portas do container para a máquina host
     environment:
-      - PORT=${PORT_BARBER_MASTER}  # Variáveis de ambiente
+      - PORT_BARBER_MASTER=${PORT_BARBER_MASTER}  # Variáveis de ambiente
       - NODE_ENV=production  # Define o ambiente como produção
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_USER=${POSTGRES_USER}
