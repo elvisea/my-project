@@ -53,6 +53,7 @@ export class CreateOwnerService {
 
     Object.assign(createOwnerResponseDTO, {
       id: createdOwner.id,
+      public_id: createdOwner.public_id,
       role: createdOwner.role,
       name: createdOwner.name,
       email: createdOwner.email,

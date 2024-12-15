@@ -8,15 +8,15 @@ import {
 
 import { Owner } from './owner.entity';
 
-@Entity('email_verifications')
-export class EmailVerification {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+@Entity('verified_owner_emails')
+export class VerifiedOwnerEmail {
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ name: 'token', length: 6, nullable: false })
   token: string;
 
-  @OneToOne(() => Owner, (owner) => owner.emailVerification, {
+  @OneToOne(() => Owner, (owner) => owner.verifiedOwnerEmail, {
     nullable: false,
   })
   @JoinColumn({ name: 'owner_id' })

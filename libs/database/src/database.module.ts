@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Owner } from '../entities/owner.entity';
-import { EmailVerification } from '../entities/email-verification.entity';
+import { VerifiedOwnerEmail } from '../entities/verified-owner-email.entity';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { EmailVerification } from '../entities/email-verification.entity';
           username: configService.get('POSTGRES_USER'),
           password: configService.get('POSTGRES_PASSWORD'),
           database: configService.get('POSTGRES_DB'),
-          entities: [Owner, EmailVerification],
+          entities: [Owner, VerifiedOwnerEmail],
           synchronize: true,
           logging: logging,
         };
