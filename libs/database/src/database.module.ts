@@ -38,4 +38,4 @@ import { VerifiedOwnerEmail } from '../entities/verified-owner-email.entity';
   ],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}
