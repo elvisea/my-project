@@ -1,38 +1,43 @@
-# Etapa 1: Build da aplicação
-FROM node:20 AS build
+# Estágio de build - Usa uma imagem Node.js Alpine para minimizar o tamanho
+FROM node:20-alpine AS builder
 
-# Diretório de trabalho
+# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copiar package.json e package-lock.json
-COPY package.json package-lock.json ./
+# Copia os arquivos de configuração primeiro para aproveitar o cache do Docker
+# Isso evita reinstalar as dependências se só o código fonte mudou
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
 
-# Instalar dependências
+# Copia o código fonte da aplicação
+# Agora, copiamos a pasta 'src', que é onde o código do NestJS está localizado
+COPY src ./src 
+
+# Instala todas as dependências
 RUN npm install
 
-# Copiar todo o código da aplicação
-COPY . .
+# Compila o projeto TypeScript
+RUN npm run build  # O NestJS usará 'build' para compilar o código de 'src' para 'dist'
 
-# Compilar todas as aplicações do monorepo
-RUN npm run build
-
-# Etapa 2: Criar a imagem de produção
-FROM node:20 AS production
+# Estágio de produção - Cria uma imagem menor apenas com o necessário para executar
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copiar dependências instaladas da etapa anterior
-COPY --from=build /app/node_modules /app/node_modules
+# Copia apenas o package.json e instala somente as dependências de produção
+COPY package*.json ./
+RUN npm install --omit=dev
 
-# Copiar os arquivos compilados para todas as aplicações
-COPY --from=build /app/dist /app/dist
+# Copia os arquivos compilados do estágio de build
+# Copia a pasta dist do estágio de build
+COPY --from=builder /app/dist ./dist  
 
-# Variáveis de ambiente
-ENV NODE_ENV=production
+# Define variável de ambiente para produção
+ENV NODE_ENV production
 
-# Expor as portas de todas as aplicações
-EXPOSE 3000
-EXPOSE 3001
+# Expõe a porta que a aplicação utilizará
+EXPOSE ${PORT_BARBER_MASTER}
 
-# Iniciar ambas as aplicações (usando PM2, por exemplo)
-CMD ["npm", "run", "start:prod"]
+# Comando para iniciar a aplicação
+CMD ["node", "dist/main.js"]  # Comando padrão para iniciar uma aplicação NestJS compilada

@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { DatabaseModule } from '@app/database';
-
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 
@@ -14,8 +12,6 @@ import { AppController } from './app.controller';
       cache: false,
       expandVariables: true,
     }),
-
-    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

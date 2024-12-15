@@ -16,23 +16,6 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "paths": {
-      "@app/*": [
-        "apps/*"
-      ],
-      "@lib/*": [
-        "libs/*"
-      ],
-      "@app/database": [
-        "libs/database/src"
-      ],
-      "@app/database/*": [
-        "libs/database/src/*"
-      ]
-    }
-  },
-  "watchOptions": {
-    "watchFile": "fixedPollingInterval"
+    "noFallthroughCasesInSwitch": false
   }
 }
