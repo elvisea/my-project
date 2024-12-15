@@ -1,0 +1,43 @@
+services:
+  # Serviço para o Barber Master (Aplicação Principal) em produção
+  barber-master:
+    image: ${REGISTRY}/${IMAGE_NAME}/barber-master:${GITHUB_SHA}  # Usa a tag do commit para versionamento da imagem
+    ports:
+      - ${PORT_BARBER_MASTER}:${PORT_BARBER_MASTER}  # Mapeia as portas do container para a máquina host
+    environment:
+      - PORT=${PORT_BARBER_MASTER}  # Variáveis de ambiente
+      - NODE_ENV=production  # Define o ambiente como produção
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy  # Garante que o PostgreSQL esteja saudável antes de iniciar
+
+  # Serviço PostgreSQL
+  postgres:
+    image: postgres:latest
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}  # Mapeia as portas do PostgreSQL
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /home/deploy/data/postgresql:/var/lib/postgresql/data  # Volume de persistência dos dados
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]  # Verifica a saúde do banco
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge  # Define a rede para os containers se comunicarem
