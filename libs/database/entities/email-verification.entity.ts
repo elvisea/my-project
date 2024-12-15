@@ -6,7 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-import { User } from './user.entity';
+import { Owner } from './owner.entity';
 
 @Entity('email_verifications')
 export class EmailVerification {
@@ -16,9 +16,11 @@ export class EmailVerification {
   @Column({ name: 'token', length: 6, nullable: false })
   token: string;
 
-  @OneToOne(() => User, (user) => user.emailVerification, { nullable: false })
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @OneToOne(() => Owner, (owner) => owner.emailVerification, {
+    nullable: false,
+  })
+  @JoinColumn({ name: 'owner_id' })
+  owner: Owner;
 
   @Column({ name: 'verified', default: false })
   verified: boolean;

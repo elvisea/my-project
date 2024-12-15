@@ -3,8 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { DatabaseModule } from '@app/database';
 
-import { MyAppService } from './my-app.service';
-import { MyAppController } from './my-app.controller';
+import { OwnersModule } from './apps/my-app/modules/owners/owners.module';
 
 @Module({
   imports: [
@@ -16,8 +15,7 @@ import { MyAppController } from './my-app.controller';
     }),
 
     DatabaseModule,
+    OwnersModule,
   ],
-  controllers: [MyAppController],
-  providers: [MyAppService],
 })
 export class MyAppModule {}

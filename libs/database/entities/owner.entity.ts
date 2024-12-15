@@ -10,8 +10,8 @@ import { Role } from '../enums/role.enum';
 
 import { EmailVerification } from './email-verification.entity';
 
-@Entity('users')
-export class User {
+@Entity('owners')
+export class Owner {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -29,7 +29,7 @@ export class User {
 
   @OneToOne(
     () => EmailVerification,
-    (emailVerification) => emailVerification.user,
+    (emailVerification) => emailVerification.owner,
     { cascade: true, onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'email_verification_id' })
