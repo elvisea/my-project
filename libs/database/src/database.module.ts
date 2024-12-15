@@ -17,6 +17,11 @@ import { VerifiedOwnerEmail } from '../entities/verified-owner-email.entity';
             ? ['query', 'error', 'schema', 'warn']
             : [];
 
+        console.log(`📅 Data: ${new Date().toLocaleString()}`);
+        console.log(
+          `Environment: ${configService.get('NODE_ENV') === 'development'}`,
+        );
+
         return {
           type: 'postgres',
           host: configService.get('POSTGRES_HOST'),
@@ -33,4 +38,4 @@ import { VerifiedOwnerEmail } from '../entities/verified-owner-email.entity';
   ],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
