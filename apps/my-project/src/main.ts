@@ -9,7 +9,7 @@ async function bootstrap() {
   const configService = app.get<ConfigService>(ConfigService);
   const port = configService.get<number>('PORT_MY_PROJECT');
 
-  const appName = 'MyProject';
+  const appName = 'App: My Project';
 
   console.log('==================================================');
   console.log(`🚀 ${appName} está iniciando...`);
